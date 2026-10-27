@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GreenApple Store | Grocery &amp; Food</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">🍏 GreenApple</div>
+    <button class="cart-btn" onclick="toggleCart()">🛒 Cart <span id="count">0</span></button>
+  </header>
+
+  <section class="hero">
+    <h1>Fresh Grocery &amp; Food, Delivered Fast</h1>
+    <p>Fruits, vegetables, dairy, snacks and more at the best prices.</p>
+    <a href="#products">Shop Now</a>
+  </section>
+
+  <main id="products">
+    <h2>Our Products</h2>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer>© 2026 GreenApple Store. Fresh every day.</footer>
+
+  <div class="overlay" id="overlay" onclick="toggleCart()"></div>
+  <aside class="cart" id="cart">
+    <div class="cart-head"><h2>Your Cart</h2><button onclick="toggleCart()">×</button></div>
+    <div id="cart-items"></div>
+    <div class="total"><span>Total</span><span id="total">₹0</span></div>
+    <button class="checkout" onclick="checkout()">Checkout</button>
+  </aside>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const products = [
+      { id: 1, name: "Apple", emoji: "🍎", cat: "Fruits", price: 180, unit: "1 kg" },
+      { id: 2, name: "Banana", emoji: "🍌", cat: "Fruits", price: 60, unit: "1 dozen" },
+      { id: 3, name: "Mango", emoji: "🥭", cat: "Fruits", price: 140, unit: "1 kg" },
+      { id: 4, name: "Tomato", emoji: "🍅", cat: "Vegetables", price: 40, unit: "1 kg" },
+      { id: 5, name: "Potato", emoji: "🥔", cat: "Vegetables", price: 35, unit: "1 kg" },
+      { id: 6, name: "Carrot", emoji: "🥕", cat: "Vegetables", price: 50, unit: "500 g" },
+      { id: 7, name: "Milk", emoji: "🥛", cat: "Dairy", price: 30, unit: "500 ml" },
+      { id: 8, name: "Cheese", emoji: "🧀", cat: "Dairy", price: 120, unit: "200 g" },
+      { id: 9, name: "Bread", emoji: "🍞", cat: "Bakery", price: 45, unit: "1 loaf" },
+      { id: 10, name: "Eggs", emoji: "🥚", cat: "Dairy", price: 84, unit: "12 pcs" },
+      { id: 11, name: "Chips", emoji: "🍟", cat: "Snacks", price: 20, unit: "1 pack" },
+      { id: 12, name: "Orange Juice", emoji: "🧃", cat: "Drinks", price: 90, unit: "1 litre" }
+    ];
+    let cart = {};
+    let activeCat = "All";
+
+    function renderFilters() {
+      const cats = ["All", ...new Set(products.map(p => p.cat))];
+      document.getElementById("filters").innerHTML = cats.map(c =>
+        `<button class="${c === activeCat ? "active" : ""}" onclick="setCat('${c}')">${c}</button>`).join("");
+    }
+    function setCat(c) { activeCat = c; renderFilters(); renderProducts(); }
+
+    function renderProducts() {
+      const list = products.filter(p => activeCat === "All" || p.cat === activeCat);
+      document.getElementById("grid").innerHTML = list.map(p => `
+        <div class="card">
+          <div class="emoji">${p.emoji}</div>
+          <h3>${p.name}</h3>
+          <div class="unit">${p.unit}</div>
+          <div class="price">₹${p.price}</div>
+          <button onclick="addToCart(${p.id})">Add to Cart</button>
+        </div>`).join("");
+    }
+
+    function addToCart(id) {
+      cart[id] = (cart[id] || 0) + 1;
+      renderCart();
+      const p = products.find(x => x.id === id);
+      toast(p.name + " added to cart");
+    }
+    function changeQty(id, d) {
+      cart[id] += d;
+      if (cart[id] <= 0) delete cart[id];
+      renderCart();
+    }
+    function removeItem(id) { delete cart[id]; renderCart(); }
+
+    function renderCart() {
+      const ids = Object.keys(cart);
+      let total = 0, count = 0;
+      const html = ids.map(id => {
+        const p = products.find(x => x.id == id);
+        const q = cart[id];
+        total += p.price * q; count += q;
+        return `<div class="item">
+          <span class="emoji">${p.emoji}</span>
+          <div class="info"><strong>${p.name}</strong><br><small>₹${p.price} · ${p.unit}</small></div>
+          <div class="qty">
+            <button onclick="changeQty(${p.id}, -1)">−</button><span>${q}</span><button onclick="changeQty(${p.id}, 1)">+</button>
+          </div>
+          <button class="remove" onclick="removeItem(${p.id})" title="Remove">🗑️</button>
+        </div>`;
+      }).join("");
+      document.getElementById("cart-items").innerHTML = html || '<p class="empty">Your cart is empty 🛒</p>';
+      document.getElementById("total").textContent = "₹" + total;
+      document.getElementById("count").textContent = count;
+    }
+
+    function toggleCart() {
+      document.getElementById("cart").classList.toggle("open");
+      document.getElementById("overlay").classList.toggle("show");
+    }
+    function checkout() {
+      if (!Object.keys(cart).length) return toast("Your cart is empty");
+      cart = {}; renderCart(); toggleCart(); toast("Order placed! Thank you 🍏");
+    }
+    function toast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.classList.add("show");
+      clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+    }
+
+    renderFilters(); renderProducts(); renderCart();
+  </script>
+</body>
+</html>
